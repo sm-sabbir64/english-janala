@@ -1,12 +1,40 @@
 const createElements = (arr) => {
   const htmlElements = arr.map((el) => `<span class="btn">${el}</span>`);
-  return htmlElements.json(" ");
+  return htmlElements.join(" ");
 };
 
-const loadLessons = () => {
-  fetch("https://openapi.programming-hero.com/api/levels/all") //promise of response
-    .then((res) => res.json()) //promise of the json data
-    .then((json) => displayLesson(json.data));
+document.getElementById("btn-search").addEventListener("click", () => {
+  removeActive()
+  const input = document.getElementById("input-search");
+  const searchValue = input.value.trim().toLowerCase();
+  // console.log(searchValue);
+
+  fetch("https://openapi.programming-hero.com/api/words/all")
+    .then((res) => res.json())
+    .then((data) => {
+      const allWords = data.data;
+      console.log(allWords);
+      const filterWords = allWords.filter((word) =>
+        word.word.toLowerCase().includes(searchValue)
+      );
+      displayLevelWord(filterWords);
+    });
+});
+
+function pronounceWord(word) {
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.lang = "en-EN"; // English
+  window.speechSynthesis.speak(utterance);
+}
+
+const manageSpinner = (status) => {
+  if (status == true) {
+    document.getElementById("spinner").classList.remove("hidden");
+    document.getElementById("word-container").classList.add("hidden");
+  } else {
+    document.getElementById("word-container").classList.remove("hidden");
+    document.getElementById("spinner").classList.add("hidden");
+  }
 };
 
 const removeActive = () => {
@@ -15,7 +43,14 @@ const removeActive = () => {
   lessonButtons.forEach((btn) => btn.classList.remove("active"));
 };
 
+const loadLessons = () => {
+  fetch("https://openapi.programming-hero.com/api/levels/all") //promise of response
+    .then((res) => res.json()) //promise of the json data
+    .then((json) => displayLesson(json.data));
+};
+
 const loadlevelword = (id) => {
+  manageSpinner(true);
   const url = `https://openapi.programming-hero.com/api/level/${id}`; //promise of response
   fetch(url)
     .then((res) => res.json()) //promise of the json data
@@ -94,6 +129,7 @@ const displayLevelWord = (words) => {
             <h2 class="font-medium text-5xl">নেক্সট Lesson এ যান</h2>
       </div>
      `;
+    manageSpinner(false);
     return;
   }
 
@@ -125,12 +161,13 @@ const displayLevelWord = (words) => {
                 <button onClick="loadLevelDetail(${
                   word.id
                 })" class="btn bg-[#1A91FF10] hover:bg-[#1A91FF80]"><i class="fa-solid fa-circle-info"></i></button>
-                <button class="btn bg-[#1A91FF10] hover:bg-[#1A91FF80]"><i class="fa-solid fa-volume-high"></i></button>
+                <button onclick="pronounceWord('${word.word}')" class="btn bg-[#1A91FF10] hover:bg-[#1A91FF80]"><i class="fa-solid fa-volume-high"></i></button>
             </div>
         </div>
     `;
     wordContainer.append(loadCard);
   }
+  manageSpinner(false);
 };
 
 const displayLesson = (lessons) => {
@@ -157,4 +194,5 @@ const displayLesson = (lessons) => {
     levelContainer.append(btnDiv);
   }
 };
+
 loadLessons();
